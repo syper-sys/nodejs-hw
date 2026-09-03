@@ -14,7 +14,7 @@
   "keywords": [],
   "author": "Serhii <seruybropro@gmail.com>",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/syper-sys/nodejs-hw/issues"
   },
