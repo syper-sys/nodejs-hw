@@ -2,13 +2,30 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs/promises";
 import cors from "cors";
+import pino from 'pino-http';
 import "dotenv/config";
 
 const app = express();
-const port = process.env.PORT && 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
+
+app.use(
+  pino({
+    level: 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'HH:MM:ss',
+        ignore: 'pid,hostname',
+        messageFormat: '{req.method} {req.url} {res.statusCode} - {responseTime}ms',
+        hideObject: true,
+      },
+    },
+  }),
+);
 
 app.get("/notes", (req, res) => {
   res.status(200).json({
