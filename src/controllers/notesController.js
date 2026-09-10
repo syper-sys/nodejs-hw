@@ -43,7 +43,7 @@ export const deleteNote = async (req, res) => {
     throw createHttpError(404, 'Note not found');
   }
 
-  res.status(200).json({ note });
+  res.status(200).json(note);
 };
 
 export const updateNote = async (req, res) => {

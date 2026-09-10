@@ -7,7 +7,7 @@ import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-import NotesRoutes from './routes/notesRoutes.js';
+import notesRoutes from './routes/notesRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -21,7 +21,7 @@ app.use(
   }),
 );
 
-app.use(NotesRoutes);
+app.use(notesRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
