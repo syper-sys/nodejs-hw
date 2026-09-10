@@ -13,7 +13,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(logger);
-app.use(cors({ origin: '*' }));
+app.use(cors());
 app.use(
   express.json({
     type: ['application/json', 'application/vnd.api+json'],
