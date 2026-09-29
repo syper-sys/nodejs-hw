@@ -97,3 +97,17 @@ export const refreshUserSession = async (req, res) => {
     message: 'Session refreshed',
   });
 };
+
+export const requestResetEmail = async (req, res) => {
+  const { email } = req.body;
+
+  const user = User.findOne({ email });
+
+  // if (!user) {
+  //   throw createHttpError(404, 'Email is not found');
+  // }
+
+  res.status(200).json({
+    message: 'Password reset email sent successfully',
+  });
+};
