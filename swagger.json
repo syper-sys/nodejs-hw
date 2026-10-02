@@ -9,6 +9,10 @@
     {
       "url": "http://localhost:3000",
       "description": "Local server"
+    },
+    {
+      "url": "https://nodejs-hw-2-bkcq.onrender.com",
+      "description": "Production server"
     }
   ],
   "components": {
