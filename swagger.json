@@ -1,0 +1,384 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "nodejs-hw API",
+    "version": "1.0.0",
+    "description": "API for managing notes and user authentication"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionIdAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sessionId"
+      },
+      "accessTokenAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "accessToken"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "avatarUrl": { "type": "string", "format": "uri" }
+        }
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "_id": { "type": "string" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "tag": {
+            "type": "string",
+            "enum": ["Work", "Personal", "Meeting", "Shopping", "Ideas", "Travel", "Finance", "Health", "Important", "Todo"]
+          },
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "integer" },
+          "message": { "type": "string" },
+          "data": { "type": "object" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string", "minLength": 8 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "integer", "example": 201 },
+                    "message": { "type": "string", "example": "Successfully registered a user!" },
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login a user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully logged in",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Contains sessionId and accessToken",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "integer", "example": 200 },
+                    "message": { "type": "string", "example": "Successfully logged in a user!" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Logout the current user",
+        "responses": {
+          "204": { "description": "Successfully logged out" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh user session",
+        "responses": {
+          "200": { "description": "Session refreshed" }
+        }
+      }
+    },
+    "/auth/request-reset-email": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request a password reset email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "format": "email" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reset email sent" }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password using token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password", "token"],
+                "properties": {
+                  "password": { "type": "string", "minLength": 8 },
+                  "token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password successfully reset" }
+        }
+      }
+    },
+    "/notes": {
+      "get": {
+        "tags": ["Notes"],
+        "summary": "Get all notes",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "perPage", "in": "query", "schema": { "type": "integer", "default": 10, "minimum": 5, "maximum": 20 } },
+          { "name": "tag", "in": "query", "schema": { "type": "string", "enum": ["Work", "Personal", "Meeting", "Shopping", "Ideas", "Travel", "Finance", "Health", "Important", "Todo"] } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["_id", "tag"] } },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/Note" } },
+                        "page": { "type": "integer" },
+                        "perPage": { "type": "integer" },
+                        "totalItems": { "type": "integer" },
+                        "totalPages": { "type": "integer" },
+                        "hasPreviousPage": { "type": "boolean" },
+                        "hasNextPage": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Notes"],
+        "summary": "Create a new note",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title"],
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "content": { "type": "string" },
+                  "tag": { "type": "string", "enum": ["Work", "Personal", "Meeting", "Shopping", "Ideas", "Travel", "Finance", "Health", "Important", "Todo"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/Note" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notes/{noteId}": {
+      "get": {
+        "tags": ["Notes"],
+        "summary": "Get a note by ID",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "parameters": [
+          { "name": "noteId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "integer" },
+                    "message": { "type": "string" },
+                    "data": { "$ref": "#/components/schemas/Note" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Note not found" }
+        }
+      },
+      "patch": {
+        "tags": ["Notes"],
+        "summary": "Update a note",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "parameters": [
+          { "name": "noteId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "content": { "type": "string" },
+                  "tag": { "type": "string", "enum": ["Work", "Personal", "Meeting", "Shopping", "Ideas", "Travel", "Finance", "Health", "Important", "Todo"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Note updated" }
+        }
+      },
+      "delete": {
+        "tags": ["Notes"],
+        "summary": "Delete a note",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "parameters": [
+          { "name": "noteId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Note deleted" }
+        }
+      }
+    },
+    "/users/me/avatar": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update user avatar",
+        "security": [{ "sessionIdAuth": [], "accessTokenAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": { "type": "string", "format": "binary" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Avatar updated" }
+        }
+      }
+    }
+  }
+}

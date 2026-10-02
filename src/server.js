@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import fs from 'node:fs';
+import path from 'node:path';
 
+import swaggerUi from 'swagger-ui-express';
 import { errors } from 'celebrate';
 import { connectMongoDB } from './db/connectMongoDB.js';
 import { logger } from './middleware/logger.js';
@@ -25,6 +28,12 @@ app.use(
   }),
 );
 app.use(cookieParser());
+
+const swaggerDocument = JSON.parse(
+  fs.readFileSync(path.resolve('swagger.json'), 'utf8'),
+);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(authRoutes);
 app.use(notesRoutes);
